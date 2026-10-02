@@ -39,6 +39,9 @@ void main() {
   test('เรียก login / logout / unreadCount ก่อน init ไม่ throw', () async {
     final r = await PkbFcm.login();
     expect(r.status, PkbFcmStatus.notInitialized);
+    // เรียกซ้อนกันได้ ไม่ error
+    final both = await Future.wait([PkbFcm.login(), PkbFcm.login()]);
+    expect(both.map((x) => x.status), everyElement(PkbFcmStatus.notInitialized));
     await PkbFcm.logout();
     expect(PkbFcm.isLoggedIn, isFalse);
     expect(await PkbFcm.unreadCount(), 0);

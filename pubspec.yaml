@@ -1,10 +1,10 @@
 name: pkb_fcm_notification
 description: >-
-  Push notifications (Firebase Cloud Messaging) for SO-AT cooperative apps in a few lines:
-  permission prompt, device registration, foreground display, tap handling and inbox.
-  Pairs with the Laravel package soat/laravel-soat-fcm-notification.
+  Push notifications (FCM) for Flutter apps in three calls: permission prompt,
+  device registration, foreground display, tap handling and inbox. Android and iOS.
 version: 1.0.0
 repository: https://github.com/pirapong/pkb_fcm_notification
+issue_tracker: https://github.com/pirapong/pkb_fcm_notification/issues
 topics:
   - push-notifications
   - firebase-messaging

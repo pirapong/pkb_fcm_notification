@@ -7,11 +7,14 @@ import 'models.dart';
 
 /// error จาก API ของ soat/laravel-soat-fcm-notification
 class PkbFcmApiException implements Exception {
-  PkbFcmApiException(this.statusCode, this.message);
+  PkbFcmApiException(this.statusCode, this.message, {this.notLoggedIn = false});
 
-  /// HTTP status (0 = ยังไม่ได้ล็อกอิน / เครือข่ายมีปัญหา)
+  /// HTTP status (0 = ไม่ได้ยิง request / เครือข่ายมีปัญหา)
   final int statusCode;
   final String message;
+
+  /// `authToken` คืนค่าว่าง (ยังไม่ได้ล็อกอินแอป) — ไม่ได้ยิง request
+  final bool notLoggedIn;
 
   @override
   String toString() => 'PkbFcmApiException($statusCode): $message';
@@ -48,7 +51,7 @@ class PkbFcmApi {
   }) async {
     final token = await authToken();
     if (token == null || token.trim().isEmpty) {
-      throw PkbFcmApiException(0, 'ยังไม่ได้ล็อกอิน (authToken ว่าง)');
+      throw PkbFcmApiException(0, 'ยังไม่ได้ล็อกอิน (authToken ว่าง)', notLoggedIn: true);
     }
 
     final request = http.Request(method, _uri(path, query))

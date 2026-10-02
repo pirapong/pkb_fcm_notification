@@ -48,7 +48,9 @@ void main() {
     final a = api((_) => json({}), token: null);
     expect(
       () => a.registerDevice(fcmToken: 'f', platform: 'ios'),
-      throwsA(isA<PkbFcmApiException>().having((e) => e.statusCode, 'statusCode', 0)),
+      throwsA(isA<PkbFcmApiException>()
+          .having((e) => e.statusCode, 'statusCode', 0)
+          .having((e) => e.notLoggedIn, 'notLoggedIn', isTrue)),
     );
     expect(requests, isEmpty);
   });

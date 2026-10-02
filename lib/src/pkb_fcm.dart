@@ -18,7 +18,8 @@ import 'options.dart';
 /// await PkbFcm.logout();  // ก่อนลบ token ล็อกอินของแอป
 /// ```
 ///
-/// ทุกเมธอดไม่ throw — ผลลัพธ์ดูจาก [PkbFcmResult] และ log (เปิด `debug: true`)
+/// เมธอดหลักไม่ throw — ผลลัพธ์ดูจาก [PkbFcmResult] และ log (เปิด `debug: true`)
+/// ยกเว้น [api] ที่ throw [StateError] ถ้ายังไม่ได้เรียก [init]
 class PkbFcm {
   PkbFcm._();
 
@@ -33,6 +34,9 @@ class PkbFcm {
   static String? _fcmToken;
   static bool _loggedIn = false;
   static final List<StreamSubscription<dynamic>> _subs = [];
+
+  // login ที่กำลังทำอยู่ — เรียกซ้อนกัน (registerOnStart + แอปเรียกเอง) ใช้ผลเดียวกัน ไม่ยิง API ซ้ำ
+  static Future<PkbFcmResult>? _loginInFlight;
 
   // Android cold start: getInitialMessage และ onMessageOpenedApp ส่งข้อความเดียวกันมาทั้งคู่ → กันซ้ำด้วย messageId
   static final List<String> _openedIds = [];
@@ -161,7 +165,15 @@ class PkbFcm {
   /// เรียกหลังสมาชิกล็อกอินแอป: ขอสิทธิ์แจ้งเตือน (dialog ของระบบ) → ลงทะเบียนเครื่อง → subscribe ประกาศ
   ///
   /// เรียกซ้ำได้ทุกครั้งที่เปิดแอป (ไม่ถามสิทธิ์ซ้ำถ้าผู้ใช้ตอบไปแล้ว)
-  static Future<PkbFcmResult> login({bool requestPermission = true}) async {
+  static Future<PkbFcmResult> login({bool requestPermission = true}) {
+    final inFlight = _loginInFlight;
+    if (inFlight != null) return inFlight;
+    final future = _login(requestPermission);
+    _loginInFlight = future;
+    return future.whenComplete(() => _loginInFlight = null);
+  }
+
+  static Future<PkbFcmResult> _login(bool requestPermission) async {
     if (!_ready || _api == null) {
       return PkbFcmResult(PkbFcmStatus.notInitialized, _initError ?? 'ยังไม่ได้เรียก PkbFcm.init()');
     }
@@ -201,7 +213,7 @@ class PkbFcm {
     } on PkbFcmApiException catch (e) {
       _log('ลงทะเบียนไม่สำเร็จ: $e');
       return PkbFcmResult(
-        e.statusCode == 0 && e.message.contains('authToken') ? PkbFcmStatus.notLoggedIn : PkbFcmStatus.failed,
+        e.notLoggedIn ? PkbFcmStatus.notLoggedIn : PkbFcmStatus.failed,
         e.toString(),
       );
     } catch (e) {

@@ -1,0 +1,6 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+  package="com.pkb.pkb_fcm_notification">
+  <uses-permission android:name="android.permission.INTERNET"/>
+  <!-- Android 13+ ต้องขอสิทธิ์แสดงแจ้งเตือน (ขอผ่าน FirebaseMessaging.requestPermission) -->
+  <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+</manifest>

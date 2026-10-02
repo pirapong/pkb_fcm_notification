@@ -1,0 +1,39 @@
+name: pkb_fcm_notification
+description: >-
+  Push notifications (Firebase Cloud Messaging) for SO-AT cooperative apps in a few lines:
+  permission prompt, device registration, foreground display, tap handling and inbox.
+  Pairs with the Laravel package soat/laravel-soat-fcm-notification.
+version: 1.0.0
+repository: https://gitlab.com/pirapong/pkb_fcm_notification
+topics:
+  - push-notifications
+  - firebase-messaging
+  - fcm
+  - notifications
+
+# Flutter 3.22 (Dart 3.4) ขึ้นไป — ห้ามใช้ syntax/API ที่ใหม่กว่านี้
+environment:
+  sdk: '>=3.4.0 <4.0.0'
+  flutter: '>=3.22.0'
+
+# ช่วงเวอร์ชันกว้าง: เวอร์ชันต่ำสุดใช้ได้กับ Flutter 3.22, สูงสุดคือเวอร์ชันล่าสุด (API ที่ใช้เหมือนกันทั้งช่วง)
+dependencies:
+  flutter:
+    sdk: flutter
+  firebase_core: '>=3.0.0 <5.0.0'
+  firebase_messaging: '>=15.0.0 <17.0.0'
+  http: '>=1.1.0 <2.0.0'
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: '>=4.0.0 <7.0.0'
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: com.pkb.pkb_fcm_notification
+        pluginClass: PkbFcmNotificationPlugin
+      ios:
+        pluginClass: PkbFcmNotificationPlugin

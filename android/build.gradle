@@ -1,0 +1,41 @@
+// เขียนแบบเดียวกับ firebase_messaging (Java ล้วน ไม่ใช้ Kotlin plugin)
+// เพื่อให้ใช้ได้กับแอปตั้งแต่ Flutter 3.22 (AGP 7.x) ถึงรุ่นใหม่ (AGP 9.x)
+group 'com.pkb.pkb_fcm_notification'
+version '1.0-SNAPSHOT'
+
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+apply plugin: 'com.android.library'
+
+android {
+    if (project.android.hasProperty("namespace")) {
+        namespace 'com.pkb.pkb_fcm_notification'
+    }
+
+    compileSdkVersion 34
+
+    defaultConfig {
+        minSdkVersion 21
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    dependencies {
+        implementation 'androidx.core:core:1.12.0'
+    }
+}

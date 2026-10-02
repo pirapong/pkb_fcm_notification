@@ -1,93 +1,200 @@
 # pkb_fcm_notification
 
+Push notifications (Firebase Cloud Messaging) for SO-AT cooperative apps in a few lines of code —
+system permission prompt, device registration, foreground display, tap handling and an optional inbox page.
+Works with the Laravel package [`soat/laravel-soat-fcm-notification`](#backend).
 
-
-## Getting started
-
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
-
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-* [Create](https://docs.gitlab.com/user/project/repository/web_editor/#create-a-file) or [upload](https://docs.gitlab.com/user/project/repository/web_editor/#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
-
-```
-cd existing_repo
-git remote add origin https://gitlab.com/pirapong/pkb_fcm_notification.git
-git branch -M main
-git push -uf origin main
+```dart
+await PkbFcm.init(baseUrl: 'https://coop.example.com', authToken: () => storage.read('token'));
+await PkbFcm.login();   // after the member signs in
+await PkbFcm.logout();  // before clearing the app's login token
 ```
 
-## Integrate with your tools
+- Android & iOS · Flutter **3.22+** (Dart 3.4+)
+- Only 3 dependencies: `firebase_core`, `firebase_messaging`, `http` (native code is bundled — no `flutter_local_notifications`)
+- No method throws — results are returned as `PkbFcmResult`
 
-* [Set up project integrations](https://gitlab.com/pirapong/pkb_fcm_notification/-/settings/integrations)
+---
 
-## Collaborate with your team
+## ภาษาไทย
 
-* [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+แพ็กเกจแจ้งเตือนสำหรับแอปสหกรณ์ ใช้แทน OneSignal — เรียก 3 คำสั่งก็ใช้งานได้
+ส่งตรงจากเซิร์ฟเวอร์ของสหกรณ์ผ่าน Firebase (ฟรี ไม่จำกัดจำนวนผู้ใช้)
 
-## Test and Deploy
+| ทำให้อัตโนมัติ | |
+|---|---|
+| ขอสิทธิ์แจ้งเตือน | dialog ของระบบเท่านั้น ไม่มีหน้าจออื่น |
+| ลงทะเบียนเครื่องกับเซิร์ฟเวอร์ | `POST /api/push/device` ใช้ token ล็อกอินที่แอปมีอยู่ (ไม่ต้องส่งเลขสมาชิก) |
+| ประกาศถึงทุกคน | subscribe topic `all_members` |
+| แจ้งเตือนตอนแอปเปิดอยู่ | Android แสดงผ่าน native ของแพ็กเกจ, iOS แสดงผ่านระบบ |
+| กดแจ้งเตือน | แจ้งแอปผ่าน `PkbFcm.onOpened` + mark อ่านแล้วให้ (กันกดซ้ำตอนเปิดแอปจากแจ้งเตือน) |
+| เปิดแอปครั้งถัดไป / token เปลี่ยน | ลงทะเบียนซ้ำเองโดยไม่ถามสิทธิ์ซ้ำ |
+| ล็อกเอาต์ | ลบเครื่องออกจากเซิร์ฟเวอร์ + ลบ FCM token |
+| Inbox (ไม่บังคับ) | `PkbFcmInboxPage()` หน้ารายการแจ้งเตือนสำเร็จรูป |
 
-Use the built-in continuous integration in GitLab.
+### ความต้องการของระบบ
 
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/)
+| | ขั้นต่ำ | หมายเหตุ |
+|---|---|---|
+| Flutter / Dart | 3.22 / 3.4 | ดูที่ `pubspec.yaml` ของแอป → `environment: sdk:` ต้อง ≥ 3.4 |
+| Android | minSdk 23, Kotlin ≥ 1.9 | ข้อกำหนดของ Firebase (แอปยุค Flutter 3.22 มักตั้ง Kotlin 1.7 ต้องแก้ใน `android/settings.gradle`) |
+| iOS | 15.0 | ข้อกำหนดของ Firebase · ต้องเป็นเครื่องจริง (simulator ไม่ได้รับ push) |
+| Backend | `soat/laravel-soat-fcm-notification` | ติดตั้งบนไซต์สหกรณ์ ([คู่มือ](#backend)) |
 
-***
+---
 
-# Editing this README
+## ติดตั้ง (ครั้งเดียวต่อแอป)
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+### 1. เพิ่มแพ็กเกจ
+```bash
+flutter pub add pkb_fcm_notification
+```
 
-## Suggestions for a good README
+### 2. ผูกแอปกับ Firebase project ของสหกรณ์ (1 สหกรณ์ = 1 project)
+```bash
+dart pub global activate flutterfire_cli
+flutterfire configure --project=<firebase-project-id>
+```
+ได้ `lib/firebase_options.dart`, `android/app/google-services.json`, `ios/Runner/GoogleService-Info.plist`
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+### 3. Android
+- `android/app/build.gradle(.kts)`: `minSdk` อย่างน้อย **23**
+- Kotlin อย่างน้อย **1.9** (`android/settings.gradle` → `org.jetbrains.kotlin.android`)
+- (แนะนำ) ไอคอนแจ้งเตือนสีขาวพื้นโปร่งใส — ใส่ใน `AndroidManifest.xml` ภายใน `<application>`:
+  ```xml
+  <meta-data android:name="com.google.firebase.messaging.default_notification_icon"
+             android:resource="@drawable/ic_notification" />
+  ```
+  ถ้าไม่ใส่ จะใช้ไอคอนแอป (บาง Android แสดงเป็นสี่เหลี่ยมสีขาว)
 
-## Name
-Choose a self-explaining name for your project.
+### 4. iOS (Xcode → Runner → Signing & Capabilities)
+1. **+ Capability → Push Notifications**
+2. **+ Capability → Background Modes** → ติ๊ก **Remote notifications**
+3. `ios/Podfile` → `platform :ios, '15.0'`
+4. Apple Developer → Keys → สร้าง **APNs key (.p8)** → อัปโหลดใน Firebase → Project settings → Cloud Messaging → Apple app configuration
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+---
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+## ใช้งาน
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+### `main.dart` — ครั้งเดียว
+```dart
+import 'package:pkb_fcm_notification/pkb_fcm_notification.dart';
+import 'firebase_options.dart';
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+  await PkbFcm.init(
+    baseUrl: 'https://coop.example.com',                 // โดเมนไซต์สหกรณ์
+    authToken: () => SecureStorage().readKey('token'),   // token ล็อกอินที่แอปเก็บไว้ (ส่งเป็น Bearer)
+    firebaseOptions: DefaultFirebaseOptions.currentPlatform,
+  );
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+  runApp(const MyApp());
+}
+```
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+### หลังสมาชิกล็อกอิน — แทน OneSignal ทั้งก้อน
+```dart
+final result = await PkbFcm.login();   // dialog ขอสิทธิ์ของระบบ + ลงทะเบียนเครื่อง
+```
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+<details>
+<summary>เทียบกับ OneSignal เดิม</summary>
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+```dart
+// เดิม
+await OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
+OneSignal.initialize("app-id");
+await OneSignal.Notifications.requestPermission(true);
+await OneSignal.User.addTagWithKey("membership_no", membershipNo);
+await OneSignal.User.pushSubscription.optIn();
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+// ใหม่
+await PkbFcm.login();
+```
+ไม่ต้องส่ง `membership_no` — เซิร์ฟเวอร์อ่านจาก token ล็อกอิน (ปลอมเลขสมาชิกคนอื่นไม่ได้)
+</details>
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+### ล็อกเอาต์ — เรียก **ก่อน** ลบ token ล็อกอินของแอป
+```dart
+await PkbFcm.logout();
+await SecureStorage().deleteKey('token');
+```
 
-## License
-For open source projects, say how it is licensed.
+### กดแจ้งเตือนแล้วพาไปหน้าที่ต้องการ
+```dart
+PkbFcm.onOpened.listen((message) {
+  switch (message.screen) {          // ค่า $data['screen'] ที่ไซต์ส่งมา
+    case 'deposit': navigatorKey.currentState?.pushNamed('/deposit'); break;
+    case 'loan':    navigatorKey.currentState?.pushNamed('/loan'); break;
+    default:        navigatorKey.currentState?.pushNamed('/notifications');
+  }
+});
+```
+ข้อความที่ทำให้แอปถูกเปิด (แอปปิดอยู่) จะถูกเก็บไว้และส่งให้ทันทีที่เริ่ม `listen`
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+### Inbox (ไม่บังคับ — แอปที่มีหน้าแจ้งเตือนอยู่แล้วไม่ต้องใช้)
+```dart
+Navigator.push(context, MaterialPageRoute(builder: (_) => const PkbFcmInboxPage()));
+final unread = await PkbFcm.unreadCount();   // ทำ badge
+```
+หรือเรียก API เอง: `PkbFcm.api.inbox(page: 1)`, `markRead(id)`, `markAllRead()`
+
+---
+
+## ผลของ `login()`
+
+| `result.status` | ความหมาย | ทำอะไรต่อ |
+|---|---|---|
+| `registered` | ลงทะเบียนแล้ว ผู้ใช้อนุญาตแจ้งเตือน | — |
+| `permissionDenied` | ลงทะเบียนแล้ว แต่ผู้ใช้ไม่อนุญาต | อาจแนะนำให้เปิดในการตั้งค่าเครื่อง |
+| `notLoggedIn` | `authToken` คืนค่าว่าง | เรียกหลังล็อกอิน |
+| `notInitialized` | ยังไม่ `init()` / Firebase ตั้งค่าไม่ครบ | ดู `result.error` |
+| `noToken` | ขอ FCM token ไม่ได้ | iOS: เครื่องจริง + Push capability + APNs key · Android: ต้องมี Google Play services |
+| `failed` | เรียก API ไม่สำเร็จ | ดู `result.error` (เช่น 401 = middleware ฝั่ง Laravel ไม่ตรงกับระบบล็อกอินแอป) |
+
+## ตั้งค่าเพิ่ม (`PkbFcmOptions`) — ทุกค่ามีค่าเริ่มต้นแล้ว
+
+| ค่า | ค่าเริ่มต้น | |
+|---|---|---|
+| `apiPrefix` | `api/push` | ตรงกับ `push.api.prefix` ฝั่ง Laravel |
+| `topic` | `all_members` | topic ประกาศ |
+| `androidChannelId` / `androidChannelName` | `coop_default` / `การแจ้งเตือน` | ต้องตรงกับ `PUSH_ANDROID_CHANNEL` |
+| `showForegroundNotification` | `true` | แสดงแจ้งเตือนแม้แอปเปิดอยู่ |
+| `markReadOnOpen` | `true` | กดแจ้งเตือนแล้ว mark อ่านแล้ว |
+| `registerOnStart` | `true` | เปิดแอปแล้วลงทะเบียนซ้ำ (ถ้าเคย login) |
+| `timeout` | 15 วินาที | |
+| `debug` | `false` | พิมพ์ log `[pkb_fcm] ...` |
+
+```dart
+await PkbFcm.init(baseUrl: ..., authToken: ..., options: const PkbFcmOptions(debug: true));
+```
+
+---
+
+## Backend
+
+ไซต์สหกรณ์ต้องติดตั้ง Laravel package `soat/laravel-soat-fcm-notification` และตั้ง
+`config/push.php` → `api.middleware` ให้ตรงกับระบบล็อกอินของแอป เช่น
+
+| แอปล็อกอินด้วย | `push.api.middleware` |
+|---|---|
+| Sanctum | `['api', 'auth:sanctum']` |
+| Passport (guard ชื่อ `mobile`) | `['api', 'auth:mobile']` |
+| api_token / JWT | `['api', 'auth:api']` |
+
+API ที่แพ็กเกจเรียก (prefix `api/push`): `POST/GET/DELETE /device`, `GET /inbox`, `GET /inbox/unread-count`,
+`POST /inbox/{id}/read`, `POST /inbox/read-all`
+
+## แก้ปัญหา
+
+| อาการ | สาเหตุ / แก้ |
+|---|---|
+| Android build: `Module was compiled with an incompatible version of Kotlin` | Kotlin ของแอปเก่าเกินไป → ตั้ง ≥ 1.9 |
+| iOS build: `requires a higher minimum iOS deployment version` | `ios/Podfile` → `platform :ios, '15.0'` |
+| `login()` → `noToken` บน iOS | simulator / ไม่ได้เปิด Push capability / ไม่ได้อัปโหลด APNs key |
+| `login()` → `failed` 401 | `push.api.middleware` ฝั่ง Laravel ไม่ตรงกับ guard ที่แอปใช้ |
+| ได้รับ Android แต่ไม่ได้ iOS | APNs key ยังไม่ได้อัปโหลด หรือ Background Modes ไม่ได้ติ๊ก Remote notifications |
+| แจ้งเตือนตอนแอปเปิดไม่เด้ง (Android) | ผู้ใช้ปิดแจ้งเตือนของแอป หรือ `showForegroundNotification: false` |

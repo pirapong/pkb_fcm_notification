@@ -4,7 +4,7 @@ description: >-
   permission prompt, device registration, foreground display, tap handling and inbox.
   Pairs with the Laravel package soat/laravel-soat-fcm-notification.
 version: 1.0.0
-repository: https://gitlab.com/pirapong/pkb_fcm_notification
+repository: https://github.com/pirapong/pkb_fcm_notification
 topics:
   - push-notifications
   - firebase-messaging

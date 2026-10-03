@@ -2,7 +2,7 @@ name: pkb_fcm_notification
 description: >-
   Push notifications (FCM) for Flutter apps in three calls: permission prompt,
   device registration, foreground display, tap handling and inbox. Android and iOS.
-version: 1.0.0
+version: 1.1.0
 repository: https://github.com/pirapong/pkb_fcm_notification
 issue_tracker: https://github.com/pirapong/pkb_fcm_notification/issues
 topics:

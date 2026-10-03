@@ -1,3 +1,11 @@
+## 1.1.0
+
+* App icon badge: `PkbFcm.setBadge(count)` / `PkbFcm.clearBadge()` — iOS sets the number directly; Android returns `false`
+  (no public API; the launcher shows a dot/number from pending notifications).
+* `PkbFcmMessage.badge` reads `data['badge']` sent by the server (Laravel package with `PUSH_BADGE=true`).
+* Foreground messages carrying a badge update it automatically (iOS) or set the notification number (Android).
+* `logout()` clears the badge.
+
 ## 1.0.0
 
 * Initial release: `PkbFcm.init()` / `login()` / `logout()` / `onOpened` / `onMessage` / `unreadCount()` and `PkbFcmInboxPage`.

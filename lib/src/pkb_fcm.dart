@@ -226,6 +226,7 @@ class PkbFcm {
   static Future<void> logout() async {
     final token = _fcmToken;
     _loggedIn = false;
+    await clearBadge();
     try {
       await _native.prefsRemove(_kLoggedIn);
       await _native.prefsRemove(_kToken);
@@ -250,6 +251,25 @@ class PkbFcm {
     _fcmToken = null;
     _log('logout เรียบร้อย');
   }
+
+  /// ตั้งตัวเลข badge บนไอคอนแอป เช่น จำนวนข้อความที่ยังไม่อ่านในหน้าแจ้งเตือนของแอป — ไม่ throw
+  ///
+  /// - iOS: ตั้งตัวเลขตรง (0 = ซ่อน) คืน `true`
+  /// - Android: ไม่มี API กลาง launcher แสดงจุด/ตัวเลขจากแจ้งเตือนที่ค้างเอง คืน `false`
+  ///
+  /// ใช้คู่กับเซิร์ฟเวอร์ที่เปิด `PUSH_BADGE`: เซิร์ฟเวอร์ใส่ตัวเลขมากับ push (ขึ้นตอนเด้งแม้แอปปิด)
+  /// แอปเรียก `setBadge` หลังโหลด/อ่านข้อความ ให้ตัวเลขลดลง
+  static Future<bool> setBadge(int count) async {
+    try {
+      return await _native.setBadge(count < 0 ? 0 : count);
+    } catch (e) {
+      _log('setBadge ไม่สำเร็จ: $e');
+      return false;
+    }
+  }
+
+  /// ล้างตัวเลข badge (เรียกให้เองตอน [logout])
+  static Future<bool> clearBadge() => setBadge(0);
 
   /// จำนวนข้อความที่ยังไม่อ่าน (ใช้ทำ badge) — error คืน 0
   static Future<int> unreadCount() async {
@@ -309,6 +329,12 @@ class PkbFcm {
     final message = _fromRemote(remote, PkbFcmSource.foreground);
     _onMessage.add(message);
 
+    // ตัวเลข badge ที่เซิร์ฟเวอร์ส่งมา: iOS ตั้งตรง, Android ใส่ในแจ้งเตือนที่แสดงเอง (setNumber)
+    final badge = message.badge;
+    if (badge != null && !_isAndroid) {
+      await setBadge(badge);
+    }
+
     // Android ไม่แสดงแจ้งเตือนเองตอนแอปเปิดอยู่ → แสดงผ่าน native (iOS แสดงเองจาก presentation options)
     if (_isAndroid && _options.showForegroundNotification && remote.notification != null) {
       try {
@@ -318,6 +344,7 @@ class PkbFcm {
           title: message.title,
           body: message.body,
           payload: message.toPayload(),
+          number: badge,
         );
       } catch (e) {
         _log('แสดงแจ้งเตือนไม่สำเร็จ: $e');

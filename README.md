@@ -101,6 +101,18 @@ final unread = await PkbFcm.unreadCount();   // for a badge
 ```
 Or call the API directly: `PkbFcm.api.inbox(page: 1)`, `markRead(id)`, `markAllRead()`.
 
+### App icon badge (unread count)
+```dart
+await PkbFcm.setBadge(unread);   // e.g. after loading your notification list or marking one read
+await PkbFcm.clearBadge();       // logout() also clears it
+```
+- **iOS** sets the number directly. **Android** has no public API — `setBadge` returns `false` and the launcher shows a dot
+  (or a number on launchers that support it) from pending notifications.
+- To make the number go **up when a push arrives while the app is closed**, the server must send it with the push:
+  the Laravel package does this for per-member messages when `PUSH_BADGE=true`
+  (`apns.payload.aps.badge`, `android.notification.notification_count`, `data.badge`).
+  Foreground messages with `data.badge` update the badge automatically.
+
 ### Result of `login()`
 
 | `result.status` | Meaning |

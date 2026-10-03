@@ -40,6 +40,9 @@ class PkbFcmMessage {
   /// หน้าที่ควรพาไป เช่น `deposit`, `loan`, `news` (ตามที่ไซต์ส่งใน `$data['screen']`)
   String? get screen => data['screen'];
 
+  /// ตัวเลข badge ที่เซิร์ฟเวอร์ส่งมา (`data['badge']`, Laravel package ที่เปิด `PUSH_BADGE`) — ไม่มีคืน null
+  int? get badge => int.tryParse(data['badge'] ?? '');
+
   static Map<String, String> stringMap(Map<dynamic, dynamic>? raw) {
     final out = <String, String>{};
     raw?.forEach((key, value) {

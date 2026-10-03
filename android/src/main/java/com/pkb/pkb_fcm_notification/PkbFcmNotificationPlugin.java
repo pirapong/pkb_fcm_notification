@@ -137,6 +137,10 @@ public class PkbFcmNotificationPlugin implements FlutterPlugin, MethodChannel.Me
                     show(call);
                     result.success(null);
                     break;
+                case "setBadge":
+                    // Android ไม่มี API กลางสำหรับตัวเลขบนไอคอน — launcher แสดงจุด/ตัวเลขจากแจ้งเตือนที่ค้างเอง
+                    result.success(false);
+                    break;
                 case "getLaunchPayload":
                     String payload = launchPayload;
                     launchPayload = null;
@@ -198,6 +202,7 @@ public class PkbFcmNotificationPlugin implements FlutterPlugin, MethodChannel.Me
         String title = call.argument("title");
         String body = call.argument("body");
         String payload = call.argument("payload");
+        Integer number = call.argument("number");
 
         Intent launch = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
         if (launch == null) {
@@ -221,6 +226,10 @@ public class PkbFcmNotificationPlugin implements FlutterPlugin, MethodChannel.Me
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setAutoCancel(true)
                 .setContentIntent(pending);
+        // ตัวเลขที่เซิร์ฟเวอร์ส่งมา (launcher ที่รองรับใช้แสดงบนไอคอน)
+        if (number != null && number > 0) {
+            builder.setNumber(number);
+        }
 
         try {
             NotificationManagerCompat.from(context).notify(requestCode, builder.build());

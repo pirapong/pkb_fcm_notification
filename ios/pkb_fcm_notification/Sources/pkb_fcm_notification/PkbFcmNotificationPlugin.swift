@@ -1,9 +1,10 @@
 import Flutter
 import UIKit
+import UserNotifications
 
 /// ส่วน native ของ pkb_fcm_notification บน iOS
 /// - แสดงแจ้งเตือนตอนแอปเปิดอยู่และการกดแจ้งเตือน firebase_messaging จัดการให้แล้ว (ฝั่ง Dart)
-/// - ที่นี่มีแค่ข้อมูลเครื่อง/เวอร์ชันแอป และค่าที่ต้องจำ (UserDefaults)
+/// - ที่นี่มีแค่ข้อมูลเครื่อง/เวอร์ชันแอป ค่าที่ต้องจำ (UserDefaults) และตัวเลข badge บนไอคอน
 public class PkbFcmNotificationPlugin: NSObject, FlutterPlugin {
   private let defaults = UserDefaults(suiteName: "pkb_fcm_notification") ?? UserDefaults.standard
 
@@ -36,6 +37,18 @@ public class PkbFcmNotificationPlugin: NSObject, FlutterPlugin {
         defaults.removeObject(forKey: key)
       }
       result(nil)
+    case "setBadge":
+      let count = max(0, args?["count"] as? Int ?? 0)
+      if #available(iOS 16.0, *) {
+        UNUserNotificationCenter.current().setBadgeCount(count) { error in
+          result(error == nil)
+        }
+      } else {
+        DispatchQueue.main.async {
+          UIApplication.shared.applicationIconBadgeNumber = count
+          result(true)
+        }
+      }
     case "createChannel", "show", "getLaunchPayload", "areNotificationsEnabled":
       // เฉพาะ Android
       result(nil)

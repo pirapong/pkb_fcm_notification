@@ -32,6 +32,7 @@ class PkbFcmNative {
     String? title,
     String? body,
     String? payload,
+    int? number,
   }) =>
       _channel.invokeMethod('show', {
         'id': id,
@@ -39,7 +40,11 @@ class PkbFcmNative {
         'title': title,
         'body': body,
         'payload': payload,
+        'number': number,
       });
+
+  /// ตั้งตัวเลขบนไอคอนแอป — iOS ได้ true, Android คืน false (launcher จัดการเอง)
+  Future<bool> setBadge(int count) async => await _channel.invokeMethod<bool>('setBadge', {'count': count}) ?? false;
 
   /// payload ของแจ้งเตือนที่ทำให้แอปถูกเปิด (Android, ใช้ได้ครั้งเดียว)
   Future<String?> getLaunchPayload() => _channel.invokeMethod<String>('getLaunchPayload');
